@@ -1,0 +1,234 @@
+name: callie-social-content-workflow
+description: >
+  End-to-end social media content generation workflow for Callie.com products.
+  Input: product images + links + trending video + target platform.
+  Output: English post copy + hashtags + Chinese video script + keyframe reference images + formatted Excel.
+version: "1.0.0"
+icon: "🎬"
+
+# 工具声明 — 声明此 Workflow 需要的所有工具
+tools:
+  - name: AI_Vision
+    description: Multimodal LLM for analyzing product images and video frames
+    type: mcp
+    command: mcp__MiniMax__understand_image  # 或对应的 vision MCP tool
+
+  - name: Video_Frame_Extract
+    description: Extract key frames from video files using OpenCV
+    type: script
+    command: python scripts/extract_frames.py
+    args:
+      - video: "{video_path}"
+      - output: "{frames_output_dir}"
+
+  - name: Keyframe_Generator
+    description: Generate AI keyframe reference images via SiliconFlow Qwen-Image API
+    type: script
+    command: python scripts/generate_keyframes.py
+    args:
+      - output: "{keyframes_output_dir}"
+      - "--config": "{config_path}"
+      - "--count": "6"
+
+  - name: Excel_Builder
+    description: Package content pack into formatted Excel with embedded images
+    type: script
+    command: python scripts/build_excel.py
+    args:
+      - "{content_json_path}"
+      - "{output_xlsx}"
+      - "--keyframes": "{keyframes_output_dir}"
+
+  - name: Content_Generator
+    description: AI-powered social content generation following Callie brand guidelines
+    type: skill
+    command: skills/social-content-generator/SKILL.md
+
+# 步骤定义 — 4个核心步骤串联
+steps:
+
+  # ============================================================
+  # Step 1: 产品信息提取
+  # ============================================================
+  - id: product_insight
+    name: Product Information Extraction
+    description: >
+      Analyze uploaded product images using AI Vision to extract:
+      - 产品名称 (product name)
+      - 品类 (category)
+      - 材质/风格 (material/style)
+      - 适用场景 (target occasions)
+      - 目标人群 (target audience)
+      Ask the user to confirm or correct the extracted information before proceeding.
+    tools:
+      - AI_Vision
+    input:
+      - user_product_images  # 用户上传的产品图片
+      - user_product_link    # 用户提供的产品链接（可选）
+    output:
+      name: product_insight
+      description: 结构化的产品信息，包含名称/品类/材质/风格/适用场景/目标人群
+      format: markdown_table
+    optional: false
+    confirm_before_proceed: true
+
+  # ============================================================
+  # Step 2: 热门视频结构拆解
+  # ============================================================
+  - id: video_insight
+    name: Trending Video Structure Analysis
+    description: >
+      Analyze a trending video file to extract its viral structure:
+      1. Extract key frames using Video_Frame_Extract tool
+      2. Analyze each frame using AI_Vision to identify:
+         - Hook类型 (悬念/情感/POV/礼物揭晓/问题抛出/前后对比)
+         - CTA类型 (账号引导/购买引导/评论互动/无明显CTA)
+         - 叙事结构 (三段式/问题-解决/情感故事/清单式)
+         - 节奏分布 (0-3s Hook / 3-15s Body / 15-30s Reveal)
+         - 文字Overlay使用方式
+      Ask the user to confirm or upload a different video.
+    tools:
+      - Video_Frame_Extract
+      - AI_Vision
+    input:
+      - user_video_file  # 用户上传的热门视频文件（mp4/mov）
+    output:
+      name: video_insight
+      description: >
+        结构化的视频结构分析，包含：
+        - Hook类型和机制
+        - CTA类型和位置
+        - 叙事结构
+        - 节奏分布（时间节点+内容）
+        - 文字Overlay风格
+        - 可复用元素列表
+      format: structured_markdown
+    optional: true  # 用户可跳过，直接用product_insight生成
+    confirm_before_proceed: true
+
+  # ============================================================
+  # Step 3: 内容生成
+  # ============================================================
+  - id: content_generation
+    name: Platform Content Generation
+    description: >
+      Generate a complete social content pack for the target platform.
+      Uses Content_Generator (Skill) with:
+      - product_insight as creative seed (产品信息引导创意方向)
+      - video_insight as structure reference (视频结构作为可复用模式)
+      - target_platform as output format (目标平台决定文案格式)
+      - references/brand-guide.md for brand voice
+      - references/platform-rules.md for platform compliance
+      - references/output-format.md for output structure
+
+      Output includes:
+      - Big Idea
+      - Brand Angle
+      - Product Tie-in level
+      - English Caption
+      - Platform-appropriate hashtags
+      - Chinese video script (时间节点+画面+镜头+文字)
+      - Keyframe storyboard (关键帧描述，4-6帧)
+      - Visual Direction
+      - CTA
+      - Brand Safety Check
+
+      One platform per run. Ask user which platform.
+    tools:
+      - Content_Generator
+    input:
+      - product_insight (from step 1)
+      - video_insight (from step 2, if provided)
+      - user_target_platform  # TikTok / Instagram / Pinterest / YouTube Shorts / Facebook / X
+    output:
+      name: content_pack
+      description: 完整的内容包，包含所有required字段
+      format: structured_markdown (following output-format.md template)
+    optional: false
+    confirm_before_proceed: true
+
+  # ============================================================
+  # Step 4: 关键帧生图 + Excel输出
+  # ============================================================
+  - id: keyframe_and_excel
+    name: Keyframe Image Generation + Excel Output
+    description: >
+      Generate AI reference images for keyframes and package everything into Excel.
+      This step is optional — only execute if user requests it.
+
+      Sub-step 4a: Generate keyframe images
+      - Use Keyframe_Generator tool
+      - Generates 6 images (9:16 vertical) via SiliconFlow Qwen-Image API
+      - Images are saved to keyframes_output_dir
+
+      Sub-step 4b: Build Excel content pack
+      - Use Excel_Builder tool
+      - Packages content_pack (from step 3) into formatted Excel
+      - Embeds all 6 keyframe reference images
+      - 5 sheets: 内容总览 / 视频脚本 / 关键帧分镜 / 产品信息 / 品牌安全检查
+
+      If user only wants the content_pack (no images), skip to presenting content_pack directly.
+    tools:
+      - Keyframe_Generator
+      - Excel_Builder
+    input:
+      - content_pack (from step 3)
+      - user_keyframes_dir  # 关键帧输出目录
+      - user_output_xlsx    # Excel输出文件路径
+    output:
+      name: excel_content_pack
+      description: 格式化Excel文件路径，包含内容包+嵌入图片
+      format: file_path
+    optional: true
+    confirm_before_proceed: false
+
+# 特殊指令
+instructions:
+  language: "zh-CN"  # Workflow界面语言
+  default_platform: "Instagram"  # 默认目标平台
+
+  # 输入收集提示（给执行Agent）
+  input_prompts:
+    product_images: "请上传1-3张Callie产品图片（清晰、白底最佳）"
+    product_link: "请提供产品页面链接（可选）"
+    video_file: "请上传1个热门竞品视频文件（mp4/mov，时长9-30秒为佳）"
+    target_platform: "请选择目标发布平台（TikTok / Instagram / Pinterest / YouTube Shorts / Facebook / X）"
+    keyframes_output: "请指定关键帧图片的输出目录"
+    output_xlsx: "请指定Excel输出文件路径"
+
+  # 平台Hashtag规则
+  hashtag_rules:
+    TikTok: 11
+    Instagram: 8
+    Pinterest: 5
+    YouTubeShorts: 8
+    Facebook: 0
+    X: 2
+
+  # 品牌安全规则
+  brand_safety:
+    - 无夸大宣传
+    - 无折扣/价格信息
+    - 无竞品提及
+    - 无争议话题（政治/社会敏感）
+    - 情感表达需符合brand-guide温暖真诚定位
+
+# 使用示例
+examples:
+  - title: "完整流程示例"
+    description: "使用产品图片+视频文件生成Instagram内容包"
+    input:
+      product_images: "3张定制木盒相册产品图"
+      product_link: "https://www.callie.com/personalized-wooden-photo-box"
+      video_file: "竞品热门视频.mp4"
+      target_platform: "Instagram"
+    output: "Callie_Instagram_Content_Pack.xlsx"
+
+  - title: "快速流程（无视频）"
+    description: "仅用产品图片生成TikTok内容包"
+    input:
+      product_images: "1张定制首饰产品图"
+      product_link: "https://www.callie.com/custom-necklace"
+      video_file: null  # 跳过Step 2
+      target_platform: "TikTok"
+    output: "Callie_TikTok_Content_Pack.xlsx"

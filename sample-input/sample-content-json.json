@@ -1,0 +1,50 @@
+{
+  "_comment": "示例内容包 JSON - 这是 build_excel.py 的输入格式",
+  "_usage": "Step C 完成后，将 AI 生成的内容按此格式组织成 JSON，传入 build_excel.py 打包为 Excel",
+  "_note": "script_rows 和 storyboard_rows 中的图片文件名需与 --keyframes 目录中的实际文件名一致",
+
+  "product_name": "Personalized Wooden Photo Box with Pull-Out Folding Photos",
+  "video_ref": "@memoryfliick（TikTok）",
+  "platform": "Instagram",
+
+  "big_idea": "用「负面悬念 + 惊喜揭晓」结构，展示开盒拉出照片的仪式感瞬间，将产品定位为值得被看见的情感载体。",
+  "brand_angle": "强化 Callie 作为「个性化礼品品牌」的定位——每一份定制都承载独特的故事和日期，礼品因专属而珍贵。",
+  "product_tie_in": "强关联：定制木盒相册（风琴式拉页）——产品本身即是情感载体。",
+
+  "caption": "She said it was ugly 🥺\n\nBut watch what happens when I open it…\n\nOur whole story, unfolding right there. Every photo, every memory — in the palm of your hand. 🎞️\n\nA gift that remembers the detail only you would know.\n\nTap the link to create yours ✨",
+
+  "hashtags": "#PersonalizedGifts  #CustomGift  #AnniversaryGift  #WoodenPhotoBox  #MemoryBox  #HandmadeGift  #GiftForHer  #GiftForHim  #PersonalizedGift  #KeepsakeGifts  #ThoughtfulGifts",
+
+  "cta": "Follow @callie for more personalized gift ideas. Tap the link in bio to design yours.",
+
+  "script_rows": [
+    ["0-1s", "特写木盒静置于桌面，周围点缀干花，背景柔焦虚化", "固定镜头，近景", "She said it was ugly 🥺", "悬念、略带委屈", "Hook阶段", "帧1", "keyframe_01.jpg"],
+    ["1-3s", "手部从画面右侧入镜，手指轻触盒盖边缘，准备打开", "缓慢推进镜头", "(无文字，悬念音乐)", "期待、紧张", "过渡", "帧2", "keyframe_02.jpg"],
+    ["3-6s", "盒盖掀起，风琴式照片拉页开始展开，露出第一张情侣照片", "镜头随展开拉远", "Our whole story, unfolding...", "惊喜、感动", "揭晓阶段", "帧3", "keyframe_03.jpg"],
+    ["6-9s", "特写照片翻页动画，连续展示3-4张照片（旅游照/生活照/合照）", "固定镜头，中景", "Every photo, every memory", "温馨、怀旧", "展示阶段", "帧4", "keyframe_04.jpg"],
+    ["9-12s", "双手将展开的木盒微微抬起，背景粉色玫瑰虚化", "缓慢上摇镜头", "A gift that remembers the detail", "温暖、珍视", "情感升华", "帧5", "keyframe_05.jpg"],
+    ["12-15s", "盒盖合上，镜头特写展示盒面刻字「Jack & Millie · 2025.11.05」", "特写推进", "Create yours - link in bio", "优雅、确定", "CTA引导", "帧6", "keyframe_06.jpg"]
+  ],
+
+  "storyboard_rows": [
+    ["帧1", "0-1s", "特写木盒静置于桌面，周围点缀干花，背景柔光。盒子为浅原木色，盖面刻有「Jack & Millie」字样，整体氛围温馨文艺。光线柔和，景深浅。", "固定镜头，微近景", "She said it was ugly 🥺", "悬念、略带委屈", "keyframe_01.jpg"],
+    ["帧2", "1-3s", "手部从画面右侧入镜，手指轻触盒盖边缘，准备打开。顶部柔和光线照亮木质纹理。", "缓慢推进镜头（Push in）", "（无文字，悬念音乐）", "期待、紧张", "keyframe_02.jpg"],
+    ["帧3", "3-6s", "盒盖打开，风琴式照片拉页缓缓展开，露出第一张情侣合影。顶部戏剧性光线，木纹清晰。情感揭晓时刻，温馨怀旧氛围。", "镜头随照片展开拉远（Pull out）", "Our whole story, unfolding...", "惊喜、感动", "keyframe_03.jpg"],
+    ["帧4", "6-9s", "特写照片翻页动画，连续展示多张照片：情侣照、旅游照、日常生活照。电影感转场效果，暖黄色怀旧调。", "固定镜头，中景", "Every photo, every memory", "温馨、怀旧", "keyframe_04.jpg"],
+    ["帧5", "9-12s", "双手将展开的木盒微微抬起展示，背景粉色玫瑰和干花虚化。暖金色光线，亲密珍贵的氛围，产品为视觉焦点。", "缓慢上摇镜头（Tilt up）", "A gift that remembers the detail", "温暖、珍视", "keyframe_05.jpg"],
+    ["帧6", "12-15s", "盒盖合上，特写展示盒面激光刻字「Jack & Millie · 2025.11.05」，精致优雅。柔光聚焦刻字，极简深色背景，高级质感。", "特写推进（Close-up push）", "Create yours - link in bio", "优雅、确定", "keyframe_06.jpg"]
+  ],
+
+  "product_rows": [
+    ["产品名称", "Personalized Wooden Photo Box with Pull-Out Folding Photos", "风琴式拉页定制木盒相册"],
+    ["品类", "定制礼品 / 纪念品 / 木盒相册", ""],
+    ["材质", "天然实木（榉木/枫木）+ 高品质涂层相纸", ""],
+    ["颜色", "浅原木色（Natural Wood Finish）", ""],
+    ["定制方式", "1. 封面激光刻字（姓名+日期）\n2. 内部风琴页印制多张照片", ""],
+    ["尺寸感", "掌中大小（约7-10厘米见方）", ""],
+    ["适用节日", "情人节 · 七夕 · 结婚纪念日 · 生日 · 圣诞节 · 母亲节/父亲节", ""],
+    ["适用人群", "情侣、夫妻、闺蜜、家人；追求生活仪式感的人群", ""],
+    ["情感定位", "「时光宝盒」——打开它，像在翻阅一段属于自己的电影", ""],
+    ["视频结构参考", "@memoryfliick（TikTok）", "「她说它丑 → 开盒揭晓 → 你觉得呢」悬念结构"]
+  ]
+}

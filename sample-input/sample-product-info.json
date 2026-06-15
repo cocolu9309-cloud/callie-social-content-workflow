@@ -1,0 +1,44 @@
+{
+  "_comment": "示例产品信息 - 这是 Step A（产品信息提取）的输出格式参考",
+  "_usage": "当 AI 分析完产品图片后，会输出类似格式的结构化信息。此 JSON 仅供参考，不是必须文件。",
+
+  "product_name": "Personalized Wooden Photo Box with Pull-Out Folding Photos",
+  "product_name_cn": "风琴式拉页定制木盒相册",
+  "category": "定制礼品 / 纪念品 / 木盒相册",
+  "material": "天然实木（榉木/枫木）+ 高品质涂层相纸",
+  "color": "浅原木色（Natural Wood Finish）",
+  "customization": [
+    "封面激光刻字（姓名+日期，如 'Jack & Millie · 2025.11.05'）",
+    "内部风琴页印制多张照片（通常6-12张）"
+  ],
+  "size": "掌中大小（约7-10厘米见方）",
+  "occasions": [
+    "情人节",
+    "七夕",
+    "结婚纪念日",
+    "生日",
+    "圣诞节",
+    "母亲节/父亲节",
+    "婚礼伴手礼"
+  ],
+  "target_audience": [
+    "情侣",
+    "夫妻",
+    "闺蜜",
+    "家人"
+  ],
+  "emotional_positioning": "「时光宝盒」——打开它，像在翻阅一段属于自己的电影",
+  "product_link": "https://www.callie.com/personalized-wooden-photo-box...",
+  "video_ref": "@memoryfliick（TikTok）",
+  "video_structure": {
+    "hook_type": "悬念留白 + 情感共鸣",
+    "hook_mechanism": "用「负面评价」制造反差，激发好奇心",
+    "cta_type": "账号引导型（软性互动）",
+    "narrative_structure": "三段式（悬念 → 揭晓 → 互动提问）",
+    "pacing": {
+      "0-3s": "Hook：「她说它丑！」",
+      "3-8s": "Body：揭开布 → 展示翻页盒 → 快速翻动照片",
+      "8-9.77s": "Reveal：「What do you think?」"
+    }
+  }
+}

@@ -236,6 +236,10 @@ CTA类型: [type]
 callie-social-content-workflow/
 ├── config.example.yaml           # 配置文件模板
 ├── workflow.social-content.yaml  # Workflow编排文件
+├── sample-input/                 # 示例输入文件（参考）
+│   ├── README.md                # 输入准备说明
+│   ├── sample-product-info.json  # 产品信息 JSON 示例
+│   └── sample-content-json.json  # build_excel.py 输入 JSON 示例
 ├── scripts/
 │   ├── extract_frames.py          # 视频帧提取 CLI
 │   ├── generate_keyframes.py      # 关键帧AI生图 CLI
@@ -248,6 +252,12 @@ callie-social-content-workflow/
     ├── platform-rules.md         # 平台规则
     └── output-format.md          # 输出格式
 ```
+
+**用户输入文件准备提示：**
+- 将产品图片放在任意目录，提供给 AI Agent 分析
+- 将竞品视频放在任意目录，使用 `extract_frames.py` 提取帧
+- 参考 `sample-input/sample-product-info.json` 了解产品信息格式
+- 参考 `sample-input/sample-content-json.json` 了解 build_excel.py 的 JSON 输入格式
 
 ---
 

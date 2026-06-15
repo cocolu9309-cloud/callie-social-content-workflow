@@ -17,7 +17,12 @@ This skill follows a 4-step workflow. Execute steps in order.
 
 ### Step A: Product Information Extraction
 
-**Input:** User provides product images (uploaded) + optional product link
+**重要说明：** 此步骤的输入由用户主动提供，Workflow 不会自动从 callie.com 抓取产品信息。
+
+**用户需要准备：**
+1. 产品图片：访问 callie.com，找到目标产品页面，下载 1-3 张产品图片（清晰、白底最佳）
+2. 产品链接：复制该产品页面的 URL
+3. 将图片和链接提供给 AI Agent
 
 **Process:**
 1. Analyze each product image using AI Vision — extract: product name, category, material, style, target occasion, target audience
@@ -31,6 +36,20 @@ This skill follows a 4-step workflow. Execute steps in order.
 材质/风格: [material/style]
 适用场景: [occasions]
 目标人群: [target audience]
+```
+
+**Example（以实际产品为例）：**
+```
+用户输入:
+- 产品链接: https://www.callie.com/personalized-wooden-photo-box...
+- 产品图片: 7张定制木盒相册产品图
+
+AI 分析输出:
+产品名称: Personalized Wooden Photo Box with Pull-Out Folding Photos
+品类: 定制木盒相册 / 纪念品
+材质/风格: 榉木/枫木，浅原木色，风琴式折叠结构
+适用场景: 纪念日、情人节、婚礼、生日、母亲节/父亲节
+目标人群: 情侣、夫妻、闺蜜、家人；追求生活仪式感的人群
 ```
 
 ---

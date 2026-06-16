@@ -127,12 +127,23 @@ CTA类型: [type]
 **Input:** Confirmed Chinese video script from Step C
 
 **Process:**
-1. If user requests AI-generated reference images:
-   - Run `scripts/generate_keyframes.py`:
-     ```bash
-     python scripts/generate_keyframes.py <output_dir> --config config.yaml --count 6
-     ```
-   - This generates 6 AI images (9:16 vertical format) via SiliconFlow Qwen-Image API
+1. If user requests AI-generated reference images, there are **two modes**:
+
+   **Mode A — Dynamic prompts from script (recommended):**
+   Pass the `script_rows` from the content JSON so prompts are generated dynamically from the actual AI-generated scene descriptions:
+   ```bash
+   python scripts/generate_keyframes.py keyframes/ --script-rows @content.json --count 6
+   # Or pass script_rows directly as JSON string:
+   python scripts/generate_keyframes.py keyframes/ --script-rows '[ ["0-1s","特写木盒","固定镜头","She said it was ugly","悬念","帧1","keyframe_01.jpg"], ... ]'
+   ```
+   This mode translates Chinese scene descriptions into cinematic English prompts automatically.
+
+   **Mode B — Hardcoded prompts (legacy/default):**
+   ```bash
+   python scripts/generate_keyframes.py keyframes/ --config config.yaml --count 6
+   ```
+   Uses built-in prompts for the Personalized Wooden Photo Box example product.
+
 2. Then run `scripts/build_excel.py` to package everything:
    ```bash
      python scripts/build_excel.py <content_json> <output.xlsx> --keyframes <keyframes_dir>
@@ -151,11 +162,11 @@ CTA类型: [type]
   "hashtags": "...",
   "cta": "...",
   "script_rows": [
-    ["0-1s", "画面描述", "镜头运动", "文字Overlay(英文)", "情绪氛围", "备注", "帧1", "keyframe_01.jpg"],
+    ["0-1s", "画面描述（中文）", "镜头运动", "文字Overlay(英文)", "情绪氛围", "备注", "帧1", "keyframe_01.jpg"],
     ...
   ],
   "storyboard_rows": [
-    ["帧1", "0-1s", "画面描述", "镜头运动", "文字Overlay(英文)", "情绪氛围", "keyframe_01.jpg"],
+    ["帧1", "0-1s", "画面描述（中文，详细版）", "镜头运动", "文字Overlay(英文)", "情绪氛围", "keyframe_01.jpg"],
     ...
   ],
   "product_rows": [
@@ -164,6 +175,8 @@ CTA类型: [type]
   ]
 }
 ```
+
+> **Tip:** `script_rows` can be passed directly to `generate_keyframes.py --script-rows` to generate dynamic image prompts from the Chinese scene descriptions instead of relying on hardcoded defaults.
 
 ---
 

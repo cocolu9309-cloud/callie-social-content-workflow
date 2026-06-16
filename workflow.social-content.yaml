@@ -18,8 +18,8 @@ tools:
     type: script
     command: python scripts/extract_frames.py
     args:
-      - video: "{video_path}"
-      - output: "{frames_output_dir}"
+      - "{video_path}"
+      - "{frames_output_dir}"
 
   - name: Keyframe_Generator
     description: Generate AI keyframe reference images via SiliconFlow Qwen-Image API
@@ -199,11 +199,11 @@ instructions:
   # 平台Hashtag规则
   hashtag_rules:
     TikTok: 11
-    Instagram: 8
+    Instagram: 5-8
     Pinterest: 5
     YouTubeShorts: 8
     Facebook: 0
-    X: 2
+    X: 0-2
 
   # 品牌安全规则
   brand_safety:

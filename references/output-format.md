@@ -70,7 +70,7 @@ Use this template for a full Callie social content pack.
 ### 6. Visual Direction
 [Shot list, image style, text overlay, layout, or pin composition.]
 
-### 6.5. Keyframe Descriptions
+### 7. Keyframe Descriptions
 [Table describing the key visual moments across the video or content sequence.]
 
 | Frame | Time | Visual Description | On-Screen Text Suggestion |
@@ -81,10 +81,10 @@ Use this template for a full Callie social content pack.
 | 4     | 0:15 | [Peak moment or pivot frame] | [Text overlay] |
 | 5     | 0:22 | [Closing frame or CTA frame] | [Text overlay] |
 
-### 7. CTA
+### 8. CTA
 [Primary action.]
 
-### 8. Brand Safety Check
+### 9. Brand Safety Check
 [Claims avoided, trend risk, tone notes, market limitations.]
 ```
 

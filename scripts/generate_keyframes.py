@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 """
 Callie Social Content Workflow — 关键帧AI生图工具
-用法: python generate_keyframes.py <输出目录> --config <config.yaml>
+用法:
+  # 方式1: 传入AI生成的script_rows，动态生成prompts
+  python scripts/generate_keyframes.py keyframes/ --script-rows "[ [\"0-1s\", \"特写木盒\", \"固定镜头\", \"She said it was ugly\", \"悬念\", \"帧1\", \"keyframe_01.jpg\"], ... ]"
+
+  # 方式2: 使用内置硬编码prompts（默认示例产品）
+  python scripts/generate_keyframes.py keyframes/ -n 6 --config config.yaml
 
 功能:
-- 读取视频帧图片，使用AI分析画面内容
-- 生成6个关键帧的中文分镜描述
-- 调用 SiliconFlow Qwen-Image API 生成9:16参考图
+- 方式1: 读取AI生成的视频脚本分镜，动态生成英文Prompt，再调用SiliconFlow Qwen-Image API
+- 方式2: 使用内置硬编码prompts生成9:16参考图
 """
 
 import httpx
@@ -22,9 +26,144 @@ DEFAULT_CONFIG = "config.yaml"
 DEFAULT_KEYFRAME_COUNT = 6
 DEFAULT_IMAGE_SIZE = "1024x1792"  # 9:16 竖版
 
+# Camera movement to English visual direction
+CAMERA_MAP = {
+    "固定镜头": "fixed camera, static shot",
+    "固定": "fixed camera, static shot",
+    "缓慢推进镜头": "slow push-in, cinematic approach",
+    "推进镜头": "push-in, cinematic approach",
+    "推进": "push-in, cinematic approach",
+    "拉远": "pull-out, revealing wider scene",
+    "缓慢拉远": "slow pull-out, cinematic reveal",
+    "上摇镜头": "tilt-up camera movement",
+    "下摇": "tilt-down camera movement",
+    "摇镜": "pan camera movement",
+    "横移": "tracking shot, side movement",
+    "特写推进": "close-up push, detail emphasis",
+    "特写": "close-up shot, detail focus",
+    "中景": "medium shot, contextual framing",
+    "全景": "wide shot, full scene",
+}
 
-# 6帧关键帧的英文Prompt模板（用于AI生图）
-KEYFRAME_PROMPTS = [
+# Mood to visual quality adjectives
+MOOD_MAP = {
+    "悬念": "suspenseful, mysterious atmosphere",
+    "期待": "anticipating, hopeful mood",
+    "紧张": "tense, dramatic tension",
+    "惊喜": "surprised, delightful moment",
+    "感动": "emotional, touching scene",
+    "温馨": "warm, cozy ambiance",
+    "怀旧": "nostalgic, golden-toned warmth",
+    "温暖": "warm, heartfelt feeling",
+    "珍视": "cherished, precious moment",
+    "优雅": "elegant, refined aesthetic",
+    "确定": "confident, decisive mood",
+    "愉悦": "joyful, light and bright",
+    "浪漫": "romantic, soft and intimate",
+}
+
+
+def translate_camera(cn: str) -> str:
+    """Translate Chinese camera direction to English"""
+    for key, val in CAMERA_MAP.items():
+        if key in cn:
+            return val
+    return "cinematic shot"
+
+
+def translate_mood(cn: str) -> str:
+    """Translate Chinese mood to English visual adjectives"""
+    for key, val in MOOD_MAP.items():
+        if key in cn:
+            return val
+    return "cinematic, emotionally resonant"
+
+
+def build_prompt_from_script_row(row: list) -> dict:
+    """
+    Build a keyframe prompt dict from a script_rows entry.
+
+    Expected row format (7-8 elements):
+      [time, scene_cn, camera_cn, overlay_en, mood_cn, notes, frame_label, img_filename]
+
+    Returns a prompt dict with frame, scene, camera, overlay, mood, prompt_en.
+    """
+    timecode = row[0] if len(row) > 0 else "0s"
+    scene_cn = row[1] if len(row) > 1 else ""
+    camera_cn = row[2] if len(row) > 2 else ""
+    overlay_en = row[3] if len(row) > 3 else ""
+    mood_cn = row[4] if len(row) > 4 else ""
+
+    scene_en = translate_scene(scene_cn)
+    camera_en = translate_camera(camera_cn)
+    mood_en = translate_mood(mood_cn)
+
+    prompt_parts = [scene_en]
+    if overlay_en and overlay_en not in ("(无文字，悬念音乐)", "(none)", ""):
+        prompt_parts.append(f"Text overlay: '{overlay_en}'")
+    prompt_parts.append(camera_en)
+    prompt_parts.append(mood_en)
+    prompt_parts.append("vertical 9:16 aspect ratio, soft natural lighting")
+
+    return {
+        "frame": f"Frame ( {timecode} )",
+        "scene": scene_cn,
+        "camera": camera_cn,
+        "overlay": overlay_en,
+        "mood": mood_cn,
+        "prompt_en": f"Cinematic photo: {', '.join(prompt_parts)}. High quality, professional photography style."
+    }
+
+
+def translate_scene(cn: str) -> str:
+    """
+    Translate Chinese scene description to English visual description.
+    Handles common patterns found in script_rows.
+    """
+    # Handle common patterns
+    replacements = [
+        # Objects
+        (r"木盒", "wooden gift box"),
+        (r"风琴式.*?相册", "accordion-fold photo album"),
+        (r"风琴式.*?拉页", "accordion-fold photo strip"),
+        (r"情侣照片?|合影", "couple photo"),
+        (r"照片翻页", "photo flipping"),
+        (r"玫瑰|干花", "roses and dried flowers"),
+        (r"背景柔焦?虚化", "soft bokeh background"),
+        (r"柔光", "soft diffused lighting"),
+        (r"暖金色光线", "warm golden hour lighting"),
+        (r"柔焦", "shallow depth of field, soft focus"),
+        (r"深色背景", "dark minimalist background"),
+        (r"极简", "minimalist composition"),
+        # Actions
+        (r"手.*?入镜", "hand entering frame"),
+        (r"手指轻触", "fingertips gently touching"),
+        (r"打开盒盖|盒盖打开", "box lid opening"),
+        (r"风琴页展开", "accordion pages gradually unfurling"),
+        (r"微微抬起", "gently lifting"),
+        (r"特写展示", "close-up detail shot of"),
+        (r"镜头随.*?拉远", "camera pulling back as"),
+        (r"缓慢推进", "slow cinematic push-in"),
+        (r"缓慢上摇", "slow tilt-up camera movement"),
+        (r"特写推进", "close-up push toward"),
+        # Text overlays
+        (r"文字Overlay.*?[:：]?\s*", ""),
+    ]
+
+    result = cn
+    for pattern, replacement in replacements:
+        import re
+        result = re.sub(pattern, replacement, result)
+
+    # Clean up and truncate if too long
+    result = result.strip("，,。. ")
+    if len(result) > 200:
+        result = result[:200] + "..."
+    return result
+
+
+# 6帧关键帧的英文Prompt模板（用于AI生图）— 默认示例产品（个性化木盒相册）
+DEFAULT_KEYFRAME_PROMPTS = [
     {
         "frame": "Frame 1 (0-1s)",
         "scene": "Close-up of personalized wooden photo box on desk, surrounded by dried flowers, soft warm bokeh",
@@ -123,7 +262,8 @@ def load_config(config_path: str) -> dict:
 
 
 def generate_keyframe_images(output_dir: str, api_key: str, image_size: str = DEFAULT_IMAGE_SIZE,
-                              count: int = DEFAULT_KEYFRAME_COUNT) -> dict:
+                              count: int = DEFAULT_KEYFRAME_COUNT,
+                              keyframe_prompts: list = None) -> dict:
     """
     调用 SiliconFlow API 生成关键帧参考图
 
@@ -132,6 +272,7 @@ def generate_keyframe_images(output_dir: str, api_key: str, image_size: str = DE
         api_key: SiliconFlow API Key
         image_size: 图像尺寸，默认 1024x1792（9:16）
         count: 生成帧数量，默认6
+        keyframe_prompts: 关键帧prompt列表，默认使用内置硬编码prompts
 
     Returns:
         dict: {frame_name: filepath} 映射
@@ -149,7 +290,8 @@ def generate_keyframe_images(output_dir: str, api_key: str, image_size: str = DE
     print(f"[generate_keyframes] Output: {os.path.abspath(output_dir)}")
     print("=" * 60)
 
-    for i, kf in enumerate(KEYFRAME_PROMPTS[:count], 1):
+    prompts = keyframe_prompts if keyframe_prompts else DEFAULT_KEYFRAME_PROMPTS
+    for i, kf in enumerate(prompts[:count], 1):
         payload = {
             "model": "Qwen/Qwen-Image",
             "prompt": kf["prompt_en"],
@@ -206,20 +348,27 @@ def generate_storyboard_json(output_dir: str, keyframe_data: list = None) -> str
         str: JSON 文件路径
     """
     if keyframe_data is None:
-        keyframe_data = KEYFRAME_PROMPTS
+        keyframe_data = DEFAULT_KEYFRAME_PROMPTS
 
     os.makedirs(output_dir, exist_ok=True)
     json_path = os.path.join(output_dir, "keyframe_storyboard.json")
 
     data = []
     for i, kf in enumerate(keyframe_data, 1):
+        # Handle both formats: "Frame 1 (0-1s)" and "Frame ( 0-1s )"
+        frame_str = kf.get("frame", f"Frame {i}")
+        try:
+            time_str = frame_str.split("(")[1].rstrip(")").strip()
+        except IndexError:
+            time_str = kf.get("time", f"{i}s")
+
         data.append({
             "frame": i,
-            "time": kf["frame"].split("(")[1].rstrip(")"),
-            "scene": kf["scene"],
-            "camera": kf["camera"],
-            "overlay": kf["overlay"],
-            "mood": kf["mood"],
+            "time": time_str,
+            "scene": kf.get("scene", ""),
+            "camera": kf.get("camera", ""),
+            "overlay": kf.get("overlay", ""),
+            "mood": kf.get("mood", ""),
             "filename": f"keyframe_{i:02d}.jpg"
         })
 
@@ -242,6 +391,11 @@ def main():
                         help=f"Number of keyframes to generate (default: {DEFAULT_KEYFRAME_COUNT})")
     parser.add_argument("--size", "-s", default=DEFAULT_IMAGE_SIZE,
                         help=f"Image size in WxH (default: {DEFAULT_IMAGE_SIZE})")
+    parser.add_argument("--script-rows", "-r", default=None,
+                        help="JSON string or @file path: AI-generated script_rows from Step C. "
+                             "When provided, prompts are generated dynamically from script descriptions instead of using hardcoded defaults. "
+                             "Example: --script-rows '[ [\"0-1s\",\"特写木盒\",\"固定镜头\",\"She said it was ugly\",\"悬念\",\"帧1\",\"keyframe_01.jpg\"], ... ]' "
+                             "or: --script-rows @content.json (will read script_rows from the JSON file)")
 
     args = parser.parse_args()
 
@@ -252,19 +406,50 @@ def main():
     else:
         print(f"[WARN] Config file not found: {args.config}, using defaults")
 
+    # 解析 script_rows（动态prompts模式）— 不需要 API Key，先解析
+    keyframe_prompts = None
+    if args.script_rows:
+        raw = args.script_rows.strip()
+        # 支持 @filename 形式：读取文件
+        if raw.startswith("@"):
+            json_path = raw[1:].strip()
+            if os.path.exists(json_path):
+                with open(json_path, "r", encoding="utf-8") as f:
+                    content_data = json.load(f)
+                    script_rows = content_data.get("script_rows", [])
+            else:
+                print(f"[WARN] Script rows file not found: {json_path}")
+                script_rows = []
+        else:
+            # 直接是 JSON 字符串
+            try:
+                script_rows = json.loads(raw)
+            except json.JSONDecodeError as e:
+                print(f"[Error] Invalid JSON in --script-rows: {e}")
+                return 1
+
+        if script_rows:
+            keyframe_prompts = [build_prompt_from_script_row(row) for row in script_rows]
+            print(f"[generate_keyframes] Built {len(keyframe_prompts)} dynamic prompts from script_rows:")
+            for kf in keyframe_prompts:
+                print(f"  {kf['frame']}: {kf['prompt_en'][:100]}...")
+            print()  # 空行分隔
+
+    # 检查 API Key（仅在需要调用 API 时）
     api_key = config.get("siliconflow_api_key", os.environ.get("SILICONFLOW_API_KEY", ""))
     if not api_key or api_key == "YOUR_API_KEY_HERE":
         print("[Error] SiliconFlow API key not configured.")
         print("  Option 1: Set siliconflow_api_key in config.yaml")
         print("  Option 2: Export environment variable: export SILICONFLOW_API_KEY=your_key")
+        if keyframe_prompts:
+            print(f"\n[Info] Dynamic prompts were built ({len(keyframe_prompts)} frames) — configure API key to generate images.")
         return 1
 
     try:
-        # 生成关键帧图片
-        results = generate_keyframe_images(args.output, api_key, args.size, args.count)
 
         # 生成分镜 JSON
-        json_path = generate_storyboard_json(args.output)
+        json_data = keyframe_prompts if keyframe_prompts else DEFAULT_KEYFRAME_PROMPTS
+        json_path = generate_storyboard_json(args.output, json_data)
 
         print("\n" + "=" * 60)
         print(f"[Done] Generated {len(results)} images")
@@ -276,6 +461,8 @@ def main():
 
     except Exception as e:
         print(f"[Error] {e}")
+        import traceback
+        traceback.print_exc()
         return 1
 
 

@@ -1,0 +1,4 @@
+siliconflow_api_key: "YOUR_API_KEY_HERE"
+llm_model: "Qwen/QwQ-32B"
+image_model: "Qwen/Qwen-Image"
+default_platform: "Instagram"

@@ -35,7 +35,8 @@ DEFAULT_OUTPUT = "Callie_Content_Pack.xlsx"
 def run_all(content_json: str, output_xlsx: str = DEFAULT_OUTPUT,
             keyframes_dir: str = DEFAULT_KEYFRAMES_DIR,
             config_path: str = "config.yaml",
-            count: int = 6):
+            count: int = 6,
+            delay: float = 2.0):
     """
     Run the full Step C → Step D pipeline.
 
@@ -103,7 +104,8 @@ def run_all(content_json: str, output_xlsx: str = DEFAULT_OUTPUT,
             api_key=api_key,
             image_size=generate_keyframes.DEFAULT_IMAGE_SIZE,
             count=count,
-            keyframe_prompts=keyframe_prompts
+            keyframe_prompts=keyframe_prompts,
+            delay=delay
         )
         print(f"[run_all] Generated {len(results)} images")
     except Exception as e:
@@ -143,6 +145,8 @@ def main():
                         help="Config file path (default: config.yaml)")
     parser.add_argument("--count", "-n", type=int, default=6,
                         help="Number of keyframes to generate (default: 6)")
+    parser.add_argument("--delay", "-d", type=float, default=2.0,
+                        help="Seconds to wait between API calls (default: 2.0)")
 
     args = parser.parse_args()
 
@@ -151,7 +155,8 @@ def main():
         output_xlsx=args.output_xlsx,
         keyframes_dir=args.keyframes,
         config_path=args.config,
-        count=args.count
+        count=args.count,
+        delay=args.delay
     )
 
 

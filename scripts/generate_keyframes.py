@@ -263,7 +263,8 @@ def load_config(config_path: str) -> dict:
 
 def generate_keyframe_images(output_dir: str, api_key: str, image_size: str = DEFAULT_IMAGE_SIZE,
                               count: int = DEFAULT_KEYFRAME_COUNT,
-                              keyframe_prompts: list = None) -> dict:
+                              keyframe_prompts: list = None,
+                              delay: float = 2.0) -> dict:
     """
     调用 SiliconFlow API 生成关键帧参考图
 
@@ -335,7 +336,7 @@ def generate_keyframe_images(output_dir: str, api_key: str, image_size: str = DE
             print(f"  [ERROR] {e}")
 
         if i < count:
-            time.sleep(2)
+            time.sleep(delay)
 
     return results
 
@@ -396,6 +397,8 @@ def main():
                              "When provided, prompts are generated dynamically from script descriptions instead of using hardcoded defaults. "
                              "Example: --script-rows '[ [\"0-1s\",\"特写木盒\",\"固定镜头\",\"She said it was ugly\",\"悬念\",\"帧1\",\"keyframe_01.jpg\"], ... ]' "
                              "or: --script-rows @content.json (will read script_rows from the JSON file)")
+    parser.add_argument("--delay", "-d", type=float, default=2.0,
+                        help="Seconds to wait between API calls (default: 2.0)")
 
     args = parser.parse_args()
 
@@ -446,14 +449,23 @@ def main():
         return 1
 
     try:
-
-        # 生成分镜 JSON
+        # 生成分镜 JSON（无论是否调用 API 都需要）
         json_data = keyframe_prompts if keyframe_prompts else DEFAULT_KEYFRAME_PROMPTS
         json_path = generate_storyboard_json(args.output, json_data)
 
+        # 调用 API 生成关键帧图片
+        image_results = generate_keyframe_images(
+            output_dir=args.output,
+            api_key=api_key,
+            image_size=args.size,
+            count=args.count,
+            keyframe_prompts=keyframe_prompts,
+            delay=args.delay
+        )
+
         print("\n" + "=" * 60)
-        print(f"[Done] Generated {len(results)} images")
-        for frame, path in results.items():
+        print(f"[Done] Generated {len(image_results)} images")
+        for frame, path in image_results.items():
             print(f"  {frame}: {os.path.basename(path)}")
         print(f"\nStoryboard JSON: {json_path}")
 

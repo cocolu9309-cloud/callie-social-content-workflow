@@ -69,8 +69,9 @@ def add_image_to_cell(ws, img_path: str, anchor: str, height: int = 160, width: 
 
 def build_overview_sheet(ws, data: dict):
     """工作表1: 内容总览"""
+    platform = data.get("platform", "Instagram")
     ws.merge_cells("A1:C1")
-    title = ws.cell(row=1, column=1, value="Callie 社媒内容包 — Instagram")
+    title = ws.cell(row=1, column=1, value=f"Callie 社媒内容包 — {platform}")
     style_cell(title, fill=HEADER_FILL,
                font=Font(name="Arial", bold=True, color="FFFFFF", size=14),
                alignment=Alignment(horizontal="center", vertical="center"),
@@ -78,7 +79,7 @@ def build_overview_sheet(ws, data: dict):
     ws.row_dimensions[1].height = 30
 
     ws.merge_cells("A2:C2")
-    p = ws.cell(row=2, column=1, value=f"产品：{data.get('product_name', '')} | 平台：Instagram | 视频结构参考：{data.get('video_ref', '')}")
+    p = ws.cell(row=2, column=1, value=f"产品：{data.get('product_name', '')} | 平台：{platform} | 视频结构参考：{data.get('video_ref', '')}")
     style_cell(p, fill=ALT_ROW_FILL, font=BODY_FONT,
                alignment=Alignment(horizontal="left", vertical="center", wrap_text=True),
                border=THIN_BORDER)
@@ -128,10 +129,10 @@ def build_overview_sheet(ws, data: dict):
     ws.column_dimensions["C"].width = 25
 
 
-def build_script_sheet(ws, script_rows: list, keyframes_dir: str):
+def build_script_sheet(ws, script_rows: list, keyframes_dir: str, platform: str = "Instagram"):
     """工作表2: 视频脚本（带图片）"""
     ws.merge_cells("A1:H1")
-    title = ws.cell(row=1, column=1, value="Instagram Reels 视频脚本（含关键帧参考图）")
+    title = ws.cell(row=1, column=1, value=f"{platform} 视频脚本（含关键帧参考图）")
     style_cell(title, fill=HEADER_FILL,
                font=Font(name="Arial", bold=True, color="FFFFFF", size=13),
                alignment=Alignment(horizontal="center", vertical="center"),
@@ -163,10 +164,10 @@ def build_script_sheet(ws, script_rows: list, keyframes_dir: str):
         add_image_to_cell(ws, img_path, f"H{i}")
 
 
-def build_storyboard_sheet(ws, storyboard_rows: list, keyframes_dir: str):
+def build_storyboard_sheet(ws, storyboard_rows: list, keyframes_dir: str, platform: str = "Instagram"):
     """工作表3: 关键帧分镜（带大图）"""
     ws.merge_cells("A1:G1")
-    title = ws.cell(row=1, column=1, value="关键帧分镜描述（含AI生成参考图）— Instagram Reels 9:16竖版")
+    title = ws.cell(row=1, column=1, value=f"关键帧分镜描述（含AI生成参考图）— {platform} 9:16竖版")
     style_cell(title, fill=HEADER_FILL,
                font=Font(name="Arial", bold=True, color="FFFFFF", size=13),
                alignment=Alignment(horizontal="center", vertical="center"),
@@ -297,6 +298,8 @@ def build_excel(content_json: str, output: str, keyframes_dir: str = DEFAULT_KEY
     else:
         data = json.loads(content_json)
 
+    platform = data.get("platform", "Instagram")
+
     wb = openpyxl.Workbook()
 
     # Sheet 1: 内容总览
@@ -307,12 +310,12 @@ def build_excel(content_json: str, output: str, keyframes_dir: str = DEFAULT_KEY
     # Sheet 2: 视频脚本
     ws2 = wb.create_sheet("视频脚本")
     script_rows = data.get("script_rows", [])
-    build_script_sheet(ws2, script_rows, keyframes_dir)
+    build_script_sheet(ws2, script_rows, keyframes_dir, platform)
 
     # Sheet 3: 关键帧分镜
     ws3 = wb.create_sheet("关键帧分镜")
     storyboard_rows = data.get("storyboard_rows", [])
-    build_storyboard_sheet(ws3, storyboard_rows, keyframes_dir)
+    build_storyboard_sheet(ws3, storyboard_rows, keyframes_dir, platform)
 
     # Sheet 4: 产品信息
     ws4 = wb.create_sheet("产品信息")

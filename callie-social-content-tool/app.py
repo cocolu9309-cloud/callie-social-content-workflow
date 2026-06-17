@@ -480,17 +480,10 @@ async def generate(
     try:
         # ===== Step 1: 分析产品信息 =====
         if product_b64:
-            product_prompt = f"""分析这张产品图，提取以下信息（用中文回复）：
-1. 产品名称
-2. 品类
-3. 材质/风格
-4. 适用场景（列出3-5个具体节日/场合）
-5. 目标人群
-
-产品名称参考（用户输入）: {product_name}"""
-            product_info = await call_sf_llm(product_prompt, images=product_b64)
-        else:
-            product_info = f"产品名称: {product_name}"
+            # 注意：DeepSeek-V3 不支持图片输入，此处改为纯文字分析
+            # 产品图将在文案生成后单独用于参考，不做AI图像识别
+            pass
+        product_info = f"产品名称: {product_name}" if product_name else "产品名称: 个性化礼品"
 
         update_task(task_id, "running", 20, "正在生成英文文案和Hashtag...")
 
@@ -547,9 +540,10 @@ CTA风格: {rules['cta_style']}"""
   "pacing": {{"0-3s": "...", "3-15s": "...", "15-30s": "..."}},
   "reusable_elements": ["..."]
 }}"""
-            video_insight = await call_sf_llm(video_prompt, images=video_b64)
+            # 注意：DeepSeek-V3 不支持图片输入，视频帧分析跳过
+            video_insight = "默认结构：悬念开盒 → 揭晓定制内容 → 情感共鸣收尾（开盒仪式感 → 定制内容展示 → 情感共鸣）"
         else:
-            video_insight = "默认结构：悬念开盒 → 揭晓定制内容 → 情感共鸣收尾"
+            video_insight = "默认结构：悬念开盒 → 揭晓定制内容 → 情感共鸣收尾（开盒仪式感 → 定制内容展示 → 情感共鸣）"
 
         script_prompt = f"""基于以下产品信息和视频结构，生成6个关键帧的中文视频脚本。
 

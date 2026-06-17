@@ -159,20 +159,29 @@ async function extractVideoFrames(file) {
       canvas.width = video.videoWidth || 1920;
       canvas.height = video.videoHeight || 1080;
       const frames = [];
+      let frameIdx = 0;
 
-      (async () => {
-        for (const ts of FRAME_TIMESTAMPS) {
-          if (ts < video.duration) {
-            video.currentTime = Math.min(ts, video.duration - 0.1);
-            await new Promise(r => video.onseeked = r);
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            frames.push(canvas.toDataURL('image/jpeg', 0.85).split(',')[1]);
-            log(`  截取帧 @ ${ts}s`);
-          }
+      video.onseeked = () => {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        frames.push(canvas.toDataURL('image/jpeg', 0.85).split(',')[1]);
+        log(`  截取帧 @ ${FRAME_TIMESTAMPS[frameIdx]}s`);
+        frameIdx++;
+        if (frameIdx >= FRAME_TIMESTAMPS.length) {
+          URL.revokeObjectURL(video.src);
+          resolve(frames);
+        } else {
+          video.currentTime = Math.min(FRAME_TIMESTAMPS[frameIdx], video.duration - 0.1);
         }
+      };
+
+      video.onerror = reject;
+
+      if (FRAME_TIMESTAMPS[0] < video.duration) {
+        video.currentTime = Math.min(FRAME_TIMESTAMPS[0], video.duration - 0.1);
+      } else {
         URL.revokeObjectURL(video.src);
-        resolve(frames);
-      })();
+        resolve([]);
+      }
     };
     video.onerror = reject;
   });

@@ -11,7 +11,6 @@ from pathlib import Path
 from typing import Optional
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
 
 app = FastAPI(title="Callie 社媒内容生成工具")
 

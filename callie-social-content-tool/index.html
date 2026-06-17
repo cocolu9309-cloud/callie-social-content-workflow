@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Callie 社媒内容生成工具</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; max-width: 680px; margin: 40px auto; padding: 0 20px; background: #f5f7fa; }
+  h1 { text-align: center; color: #1F4E79; margin-bottom: 30px; font-size: 24px; }
+
+  .card { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 20px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+
+  .form-group { margin-bottom: 20px; }
+  label { display: block; font-weight: bold; color: #2E75B6; margin-bottom: 8px; font-size: 14px; }
+  .label-hint { font-weight: normal; color: #888; font-size: 12px; margin-left: 8px; }
+
+  input[type="text"], select { width: 100%; padding: 10px 12px; border: 1.5px solid #d0d0d0;
+    border-radius: 8px; font-size: 14px; outline: none; transition: border-color 0.2s; }
+  input[type="text"]:focus, select:focus { border-color: #2E75B6; }
+
+  .upload-area { border: 2px dashed #2E75B6; border-radius: 8px; padding: 24px; text-align: center;
+    cursor: pointer; color: #2E75B6; transition: background 0.2s; }
+  .upload-area:hover { background: #f0f6ff; }
+  .upload-area input { display: none; }
+  .upload-area .hint { font-size: 12px; color: #888; margin-top: 6px; }
+  .preview-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .preview-img { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1.5px solid #ddd; }
+
+  .video-upload { border: 2px dashed #aaa; border-radius: 8px; padding: 16px; text-align: center;
+    cursor: pointer; color: #666; font-size: 14px; transition: background 0.2s; }
+  .video-upload:hover { background: #f8f8f8; }
+  .video-upload input { display: none; }
+
+  .btn-primary { width: 100%; padding: 14px; background: #1F4E79; color: #fff; border: none;
+    border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer;
+    transition: background 0.2s; margin-top: 8px; }
+  .btn-primary:hover { background: #2E75B6; }
+  .btn-primary:disabled { background: #aaa; cursor: not-allowed; }
+
+  .log-area { background: #1a1a2e; color: #a0d8a0; border-radius: 8px; padding: 16px;
+    font-family: monospace; font-size: 13px; min-height: 160px; max-height: 300px;
+    overflow-y: auto; white-space: pre-wrap; margin-bottom: 16px; line-height: 1.6; }
+  .log-error { color: #ff8080; }
+  .log-ok { color: #80d4ff; }
+
+  .download-btn { display: none; width: 100%; padding: 14px; background: #28a745; color: #fff;
+    border: none; border-radius: 10px; font-size: 16px; font-weight: bold;
+    cursor: pointer; text-align: center; text-decoration: none; }
+  .download-btn:hover { background: #218838; }
+
+  .error-msg { color: #dc3545; font-size: 13px; margin-top: 6px; display: none; }
+</style>
+</head>
+<body>
+
+<h1>🎬 Callie 社媒内容生成工具</h1>
+
+<div class="card">
+  <div class="form-group">
+    <label>产品图 <span class="label-hint">必填，支持多张（1-3张）</span></label>
+    <div class="upload-area" id="imgUpload" onclick="document.getElementById('imgInput').click()">
+      <div>📷 点击上传产品图片</div>
+      <div class="hint">支持 JPG/PNG，建议白底清晰图</div>
+      <input type="file" id="imgInput" accept="image/*" multiple onchange="previewImages(this)">
+    </div>
+    <div class="preview-grid" id="imgPreview"></div>
+  </div>
+
+  <div class="form-group">
+    <label>竞品视频 <span class="label-hint">可选，mp4/mov，时长9-30秒最佳</span></label>
+    <div class="video-upload" onclick="document.getElementById('videoInput').click()">
+      <div>🎥 点击上传竞品视频（用于分析视频结构）</div>
+      <div class="hint" id="videoName">未选择文件</div>
+      <input type="file" id="videoInput" accept="video/mp4,video/mov" onchange="onVideoSelect(this)">
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label>目标平台</label>
+    <select id="platform">
+      <option value="Instagram">Instagram</option>
+      <option value="TikTok">TikTok</option>
+      <option value="Pinterest">Pinterest</option>
+      <option value="YouTubeShorts">YouTube Shorts</option>
+      <option value="Facebook">Facebook</option>
+      <option value="X">X (Twitter)</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label>产品名称 <span class="label-hint">可选，不填则AI自动分析</span></label>
+    <input type="text" id="productName" placeholder="例如：Personalized Wooden Photo Box">
+  </div>
+
+  <button class="btn-primary" id="generateBtn" onclick="startGenerate()">开始生成</button>
+  <div class="error-msg" id="errorMsg"></div>
+</div>
+
+<div class="card">
+  <div class="log-area" id="logArea">等待上传...</div>
+  <a class="download-btn" id="downloadBtn" href="#">⬇ 下载 Excel 内容包</a>
+</div>
+
+<script>
+const imgInput = document.getElementById('imgInput');
+const imgPreview = document.getElementById('imgPreview');
+const videoInput = document.getElementById('videoInput');
+const videoName = document.getElementById('videoName');
+const platform = document.getElementById('platform');
+const productName = document.getElementById('productName');
+const generateBtn = document.getElementById('generateBtn');
+const logArea = document.getElementById('logArea');
+const downloadBtn = document.getElementById('downloadBtn');
+const errorMsg = document.getElementById('errorMsg');
+
+let selectedImages = [];
+let selectedVideo = null;
+const FRAME_TIMESTAMPS = [0, 3, 8, 15, 22, 30];
+
+function log(msg, type='') {
+  const cls = type === 'error' ? 'log-error' : type === 'ok' ? 'log-ok' : '';
+  logArea.innerHTML += `<span class="${cls}">${msg}</span>\n`;
+  logArea.scrollTop = logArea.scrollHeight;
+}
+
+function previewImages(input) {
+  imgPreview.innerHTML = '';
+  selectedImages = [];
+  Array.from(input.files).slice(0, 3).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      selectedImages.push({ name: file.name, base64: e.target.result.split(',')[1] });
+      const img = document.createElement('img');
+      img.src = e.target.result;
+      img.className = 'preview-img';
+      imgPreview.appendChild(img);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function onVideoSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+  videoName.textContent = file.name;
+  log(`已选择视频: ${file.name}`);
+}
+
+async function extractVideoFrames(file) {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.src = URL.createObjectURL(file);
+    video.onloadedmetadata = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = video.videoWidth || 1920;
+      canvas.height = video.videoHeight || 1080;
+      const frames = [];
+
+      (async () => {
+        for (const ts of FRAME_TIMESTAMPS) {
+          if (ts < video.duration) {
+            video.currentTime = Math.min(ts, video.duration - 0.1);
+            await new Promise(r => video.onseeked = r);
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            frames.push(canvas.toDataURL('image/jpeg', 0.85).split(',')[1]);
+            log(`  截取帧 @ ${ts}s`);
+          }
+        }
+        URL.revokeObjectURL(video.src);
+        resolve(frames);
+      })();
+    };
+    video.onerror = reject;
+  });
+}
+
+async function startGenerate() {
+  errorMsg.style.display = 'none';
+  logArea.innerHTML = '';
+  downloadBtn.style.display = 'none';
+
+  if (selectedImages.length === 0) {
+    errorMsg.textContent = '请至少上传一张产品图';
+    errorMsg.style.display = 'block';
+    return;
+  }
+
+  generateBtn.disabled = true;
+  generateBtn.textContent = '生成中...';
+
+  const formData = new FormData();
+  for (const img of selectedImages) {
+    const blob = await fetch(`data:image/jpeg;base64,${img.base64}`).then(r => r.blob());
+    formData.append('product_images', blob, img.name);
+  }
+
+  let videoFrames = [];
+  if (videoInput.files[0]) {
+    log('正在从视频提取帧...');
+    try {
+      videoFrames = await extractVideoFrames(videoInput.files[0]);
+      log(`已提取 ${videoFrames.length} 帧`);
+    } catch(e) {
+      log(`视频帧提取失败，跳过: ${e.message}`, 'error');
+    }
+  }
+
+  for (const frame of videoFrames) {
+    const blob = await fetch(`data:image/jpeg;base64,${frame}`).then(r => r.blob());
+    formData.append('video_frames', blob, 'frame.jpg');
+  }
+
+  formData.append('platform', platform.value);
+  formData.append('product_name', productName.value);
+
+  log('正在提交到服务器...');
+  log(`平台: ${platform.value} | 产品: ${productName.value || '(自动分析)'}`);
+
+  try {
+    const response = await fetch('/generate', { method: 'POST', body: formData });
+    const result = await response.json();
+
+    if (result.status !== 'ok') {
+      throw new Error(result.detail || '生成失败');
+    }
+
+    const taskId = result.task_id;
+    log(`任务已创建: ${taskId}`, 'ok');
+    log('等待服务器处理（每2秒轮询状态）...');
+
+    let attempts = 0;
+    while (attempts < 60) {
+      await new Promise(r => setTimeout(r, 2000));
+      const statusResp = await fetch(`/status/${taskId}`);
+      const status = await statusResp.json();
+      log(`[${status.progress}%] ${status.message}`);
+
+      if (status.status === 'done') {
+        downloadBtn.href = `/download/${taskId}`;
+        downloadBtn.style.display = 'block';
+        log('✅ 生成完成！点击下方按钮下载 Excel', 'ok');
+        break;
+      } else if (status.status === 'error') {
+        throw new Error(status.message);
+      }
+      attempts++;
+    }
+
+  } catch(e) {
+    log(`生成失败: ${e.message}`, 'error');
+    errorMsg.textContent = e.message;
+    errorMsg.style.display = 'block';
+  } finally {
+    generateBtn.disabled = false;
+    generateBtn.textContent = '开始生成';
+  }
+}
+</script>
+</body>
+</html>
